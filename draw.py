@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-"""Programme qui créé les images demandées"""
+"""Make the .ppm files and the gif"""
 
 
 import sys
@@ -8,292 +8,277 @@ import subprocess
 import approximate_pi
 
 
-def init_image(taille_image):
-    """Fonction qui créée une image vide, çad que du blanc.
-    On représente l'image par une matrice où chaque coefficient
-    est une couleur rgb."""
-    image = [[(1, 1, 1) for _ in range(taille_image)] for _ in range(taille_image)]
+def init_image(image_size):
+    """Fonction that creates a white image, each pixel is represented
+    by a cell of a matrix with its rgb value."""
+    image = [[(1, 1, 1) for _ in range(image_size)] for _ in range(image_size)]
     return image
 
 
-def affiche_segment(coordonnee, direction, taille_image):
-    """Affiche un segment dont le pixel en bas à gauche se trouve au point coordonnee
-    et dont la direction est un booléen.
+def display_segment(coordinate, direction, image_size):
+    """Display a segment where the pixel on the bottom left is at coordinate,
+    with a boolean for the direction :
     True -> horizontal
     False -> vertical"""
-    longueur_segment = taille_image // 20
-    largeur_trait = longueur_segment // 10
-    liste_pixel = []
+    segment_size = image_size // 20
+    line_width = segment_size // 10
+    list_pixel = []
     if direction:
-        for i in range(largeur_trait):
-            for j in range(longueur_segment):
-                liste_pixel.append((coordonnee[0] - i, coordonnee[1] + j))
+        for i in range(line_width):
+            for j in range(segment_size):
+                list_pixel.append((coordinate[0] - i, coordinate[1] + j))
     else:
-        for i in range(longueur_segment):
-            for j in range(largeur_trait):
-                liste_pixel.append((coordonnee[0] - i, coordonnee[1] + j))
-    return liste_pixel
+        for i in range(segment_size):
+            for j in range(line_width):
+                list_pixel.append((coordinate[0] - i, coordinate[1] + j))
+    return list_pixel
 
 
-def affiche_point(coordonne, taille_image):
-    """Affiche un point dont le pixel en bas à gauche se trouve au point coordonnee."""
-    taille_point = taille_image // 100
-    liste_pixel = []
-    for i in range(taille_point):
-        for j in range(taille_point):
-            liste_pixel.append((coordonne[0] - i, coordonne[1] + taille_image//50 + j))
-    return liste_pixel
+def display_point(coordonne, image_size):
+    """Display a point where the pixel on the bottom left is at coordinate"""
+    point_size = image_size // 100
+    list_pixel = []
+    for i in range(point_size):
+        for j in range(point_size):
+            list_pixel.append((coordonne[0] - i, coordonne[1] + image_size//50 + j))
+    return list_pixel
 
 
-def segment_bas(coordonnee, taille_image):
-    """Affiche le segment du bas"""
-    return affiche_segment(coordonnee, True, taille_image)
+def segment_bottom(coordinate, image_size):
+    """Display the segment of the bottom"""
+    return display_segment(coordinate, True, image_size)
 
 
-def segment_mileu(coordonnee, taille_image):
-    """Affiche le segment du milieu"""
-    coord_x, coord_y = coordonnee
-    longueur_segment = taille_image // 20
-    return affiche_segment((coord_x - longueur_segment, coord_y), True, taille_image)
+def segment_middle(coordinate, image_size):
+    """Display the segment of the middle"""
+    coord_x, coord_y = coordinate
+    segment_size = image_size // 20
+    return display_segment((coord_x - segment_size, coord_y), True, image_size)
 
 
-def segment_haut(coordonnee, taille_image):
-    """Affiche le segment du haut"""
-    coord_x, coord_y = coordonnee
-    longueur_segment = taille_image // 20
-    return affiche_segment((coord_x - 2*longueur_segment, coord_y), True, taille_image)
+def segment_top(coordinate, image_size):
+    """Display the segment of the top"""
+    coord_x, coord_y = coordinate
+    segment_size = image_size // 20
+    return display_segment((coord_x - 2*segment_size, coord_y), True, image_size)
 
 
-def segment_bas_gauche(coordonnee, taille_image):
-    """Affiche le segment du bas gauche"""
-    return affiche_segment(coordonnee, False, taille_image)
+def segment_bottom_left(coordinate, image_size):
+    """Display the segment of the bottom left"""
+    return display_segment(coordinate, False, image_size)
 
 
-def segment_haut_gauche(coordonnee, taille_image):
-    """Affiche le segment du haut gauche"""
-    coord_x, coord_y = coordonnee
-    longueur_segment = taille_image // 20
-    return affiche_segment((coord_x - longueur_segment, coord_y), False, taille_image)
+def segment_top_left(coordinate, image_size):
+    """Display the segment of the top left"""
+    coord_x, coord_y = coordinate
+    segment_size = image_size // 20
+    return display_segment((coord_x - segment_size, coord_y), False, image_size)
 
 
-def segment_bas_droite(coordonnee, taille_image):
-    """Affiche le segment du bas droite"""
-    coord_x, coord_y = coordonnee
-    longueur_segment = taille_image // 20
-    return affiche_segment((coord_x, coord_y + longueur_segment), False, taille_image)
+def segment_bottom_right(coordinate, image_size):
+    """Display the segment of the bottom right"""
+    coord_x, coord_y = coordinate
+    segment_size = image_size // 20
+    return display_segment((coord_x, coord_y + segment_size), False, image_size)
 
 
-def segment_haut_droite(coordonnee, taille_image):
-    """Affiche le segment du haut droite"""
-    coord_x, coord_y = coordonnee
-    longueur_segment = taille_image // 20
-    return affiche_segment((coord_x - longueur_segment, coord_y + longueur_segment),
-    False, taille_image)
+def segment_top_right(coordinate, image_size):
+    """Display the segment of the top right"""
+    coord_x, coord_y = coordinate
+    segment_size = image_size // 20
+    return display_segment((coord_x - segment_size, coord_y + segment_size),
+    False, image_size)
 
 
-def affiche_chiffre(chiffre, coordonnee, taille_image):
-    """Fonction qui affiche le chiffre correspondant.
-    Attention, l'entrée chiffre peut aussi être un point.
-    L'entrée chiffre est un string.
-    Coordonnee est un point de l'image.
-    Renvoie la liste des nouveau points"""
-    liste_chiffre = []
-    if chiffre == ".":
-        return affiche_point(coordonnee, taille_image)
-    if chiffre == "0":
-        liste_chiffre += segment_bas(coordonnee, taille_image)
-        liste_chiffre += segment_haut(coordonnee, taille_image)
-        liste_chiffre += segment_bas_droite(coordonnee, taille_image)
-        liste_chiffre += segment_bas_gauche(coordonnee, taille_image)
-        liste_chiffre += segment_haut_droite(coordonnee, taille_image)
-        liste_chiffre += segment_haut_gauche(coordonnee, taille_image)
-    elif chiffre == "1":
-        liste_chiffre += segment_haut_droite(coordonnee, taille_image)
-        liste_chiffre += segment_bas_droite(coordonnee, taille_image)
-    elif chiffre == "2":
-        liste_chiffre += segment_haut(coordonnee, taille_image)
-        liste_chiffre += segment_haut_droite(coordonnee, taille_image)
-        liste_chiffre += segment_mileu(coordonnee, taille_image)
-        liste_chiffre += segment_bas_gauche(coordonnee, taille_image)
-        liste_chiffre += segment_bas(coordonnee, taille_image)
-    elif chiffre == "3":
-        liste_chiffre += segment_haut(coordonnee, taille_image)
-        liste_chiffre += segment_haut_droite(coordonnee, taille_image)
-        liste_chiffre += segment_bas_droite(coordonnee, taille_image)
-        liste_chiffre += segment_mileu(coordonnee, taille_image)
-        liste_chiffre += segment_bas(coordonnee, taille_image)
-    elif chiffre == "4":
-        liste_chiffre += segment_haut_gauche(coordonnee, taille_image)
-        liste_chiffre += segment_haut_droite(coordonnee, taille_image)
-        liste_chiffre += segment_mileu(coordonnee, taille_image)
-        liste_chiffre += segment_bas_droite(coordonnee, taille_image)
-    elif chiffre == "5":
-        liste_chiffre += segment_haut(coordonnee, taille_image)
-        liste_chiffre += segment_haut_gauche(coordonnee, taille_image)
-        liste_chiffre += segment_mileu(coordonnee, taille_image)
-        liste_chiffre += segment_bas_droite(coordonnee, taille_image)
-        liste_chiffre += segment_bas(coordonnee, taille_image)
-    elif chiffre == "6":
-        liste_chiffre += segment_haut(coordonnee, taille_image)
-        liste_chiffre += segment_haut_gauche(coordonnee, taille_image)
-        liste_chiffre += segment_bas_gauche(coordonnee, taille_image)
-        liste_chiffre += segment_bas(coordonnee, taille_image)
-        liste_chiffre += segment_bas_droite(coordonnee, taille_image)
-        liste_chiffre += segment_mileu(coordonnee, taille_image)
-    elif chiffre == "7":
-        liste_chiffre += segment_haut(coordonnee, taille_image)
-        liste_chiffre += segment_haut_droite(coordonnee, taille_image)
-        liste_chiffre += segment_bas_droite(coordonnee, taille_image)
-    elif chiffre == "8":
-        liste_chiffre += segment_haut_gauche(coordonnee, taille_image)
-        liste_chiffre += segment_bas_gauche(coordonnee, taille_image)
-        liste_chiffre += segment_bas(coordonnee, taille_image)
-        liste_chiffre += segment_mileu(coordonnee, taille_image)
-        liste_chiffre += segment_haut(coordonnee, taille_image)
-        liste_chiffre += segment_bas_droite(coordonnee, taille_image)
-        liste_chiffre += segment_haut_droite(coordonnee, taille_image)
-    elif chiffre == "9":
-        liste_chiffre += segment_haut_gauche(coordonnee, taille_image)
-        liste_chiffre += segment_bas(coordonnee, taille_image)
-        liste_chiffre += segment_mileu(coordonnee, taille_image)
-        liste_chiffre += segment_haut(coordonnee, taille_image)
-        liste_chiffre += segment_bas_droite(coordonnee, taille_image)
-        liste_chiffre += segment_haut_droite(coordonnee, taille_image)
-    return liste_chiffre
+def display_digit(digit, coordinate, image_size):
+    """Fonction that displays the right digit.
+    Warning, digit could be a point.
+    Input digit is a string.
+    Return the list of the digits."""
+    list_digit = []
+    if digit == ".":
+        return display_point(coordinate, image_size)
+    if digit == "0":
+        list_digit += segment_bottom(coordinate, image_size)
+        list_digit += segment_top(coordinate, image_size)
+        list_digit += segment_bottom_right(coordinate, image_size)
+        list_digit += segment_bottom_left(coordinate, image_size)
+        list_digit += segment_top_right(coordinate, image_size)
+        list_digit += segment_top_left(coordinate, image_size)
+    elif digit == "1":
+        list_digit += segment_top_right(coordinate, image_size)
+        list_digit += segment_bottom_right(coordinate, image_size)
+    elif digit == "2":
+        list_digit += segment_top(coordinate, image_size)
+        list_digit += segment_top_right(coordinate, image_size)
+        list_digit += segment_middle(coordinate, image_size)
+        list_digit += segment_bottom_left(coordinate, image_size)
+        list_digit += segment_bottom(coordinate, image_size)
+    elif digit == "3":
+        list_digit += segment_top(coordinate, image_size)
+        list_digit += segment_top_right(coordinate, image_size)
+        list_digit += segment_bottom_right(coordinate, image_size)
+        list_digit += segment_middle(coordinate, image_size)
+        list_digit += segment_bottom(coordinate, image_size)
+    elif digit == "4":
+        list_digit += segment_top_left(coordinate, image_size)
+        list_digit += segment_top_right(coordinate, image_size)
+        list_digit += segment_middle(coordinate, image_size)
+        list_digit += segment_bottom_right(coordinate, image_size)
+    elif digit == "5":
+        list_digit += segment_top(coordinate, image_size)
+        list_digit += segment_top_left(coordinate, image_size)
+        list_digit += segment_middle(coordinate, image_size)
+        list_digit += segment_bottom_right(coordinate, image_size)
+        list_digit += segment_bottom(coordinate, image_size)
+    elif digit == "6":
+        list_digit += segment_top(coordinate, image_size)
+        list_digit += segment_top_left(coordinate, image_size)
+        list_digit += segment_bottom_left(coordinate, image_size)
+        list_digit += segment_bottom(coordinate, image_size)
+        list_digit += segment_bottom_right(coordinate, image_size)
+        list_digit += segment_middle(coordinate, image_size)
+    elif digit == "7":
+        list_digit += segment_top(coordinate, image_size)
+        list_digit += segment_top_right(coordinate, image_size)
+        list_digit += segment_bottom_right(coordinate, image_size)
+    elif digit == "8":
+        list_digit += segment_top_left(coordinate, image_size)
+        list_digit += segment_bottom_left(coordinate, image_size)
+        list_digit += segment_bottom(coordinate, image_size)
+        list_digit += segment_middle(coordinate, image_size)
+        list_digit += segment_top(coordinate, image_size)
+        list_digit += segment_bottom_right(coordinate, image_size)
+        list_digit += segment_top_right(coordinate, image_size)
+    elif digit == "9":
+        list_digit += segment_top_left(coordinate, image_size)
+        list_digit += segment_bottom(coordinate, image_size)
+        list_digit += segment_middle(coordinate, image_size)
+        list_digit += segment_top(coordinate, image_size)
+        list_digit += segment_bottom_right(coordinate, image_size)
+        list_digit += segment_top_right(coordinate, image_size)
+    return list_digit
 
 
-def calcul_coordonnee(chiffre_significatif, taille_image):
-    """En fonction du chiffre significatif,
-    la fonction renvoie la coordonnee du premier chiffre à afficher."""
-    nombre_caracteres = chiffre_significatif + 2
-    hauteur_chiffre = taille_image // 10
-    coord_x = (taille_image + hauteur_chiffre) // 2
-    largeur_chiffre = taille_image // 20
-    entre_chiffre = largeur_chiffre // 5
-    coord_y = taille_image//2 - round(nombre_caracteres/2*(largeur_chiffre + entre_chiffre))
+def calcul_coordinate(significant_figures, image_size):
+    """According to the significant figures, return the first digit's coordinate."""
+    nb_of_char = significant_figures + 2
+    digit_height = image_size // 10
+    coord_x = (image_size + digit_height) // 2
+    digit_widht = image_size // 20
+    between_digit = digit_widht // 5
+    coord_y = image_size//2 - round(nb_of_char/2*(digit_widht + between_digit))
     return (coord_x, coord_y)
 
 
-def afficheur_pi(approx_pi, chiffre_significatif, taille_image):
-    """Fonction qui renvoie une liste pour afficher le nombre approx_pi sur l'image.
-    Pour cela utilisons un afficheur 7 segments que l'on modélise par
-    une liste des coordonées des points à mettre ne noir."""
-    coord_afficheur = []
-    coordonnee = calcul_coordonnee(chiffre_significatif, taille_image)
+def display_pi(approx_pi, significant_figures, image_size):
+    """Return the list of points that will be black to display pi."""
+    coord_display = []
+    coordinate = calcul_coordinate(significant_figures, image_size)
     for k in approx_pi:
-        liste_new_coord = affiche_chiffre(k, coordonnee, taille_image)
-        coord_afficheur += liste_new_coord
-        coordonnee = (coordonnee[0], coordonnee[1] + round(taille_image/20 + taille_image/100))
-    return coord_afficheur
+        liste_new_coord = display_digit(k, coordinate, image_size)
+        coord_display += liste_new_coord
+        coordinate = (coordinate[0], coordinate[1] + round(image_size/20 + image_size/100))
+    return coord_display
 
 
-def color_image(liste_points, image, chiffre_significatif, num_image, compteur):
-    """Fonction qui colorie l'image quand un point est tiré,
-    le colorie en bleu si le point est dans le cercle, en rouge sinon.
-    Colorie en noir le compteur pour afficher l'approximation de pi.
-    Renvoie aussi l'approximation de pi associée à l'image et le compteur."""
-    taille_image = len(image)
-    for k in liste_points:
+def color_image(list_points, image, significant_figures, num_image, counter):
+    """Color the points, in blue if the point is inside, in red if not.
+    Color in black the pi display."""
+    image_size = len(image)
+    for k in list_points:
         coord_x, coord_y = k[0]
         if k[1]:
-            compteur += 1
+            counter += 1
             image[
-                round((coord_x+1) * (taille_image-1)/2)][
-                    round((coord_y+1) * (taille_image-1)/2)] = (0, 0, 1)
+                round((coord_x+1) * (image_size-1)/2)][
+                    round((coord_y+1) * (image_size-1)/2)] = (0, 0, 1)
         else:
             image[
-                round((coord_x+1) * (taille_image-1)/2)][
-                    round((coord_y+1) * (taille_image-1)/2)] = (1, 0, 0)
-    approx_pi = str(round(compteur * 4 / (len(liste_points)*(num_image+1)), chiffre_significatif))
-    while len(approx_pi) != chiffre_significatif + 2:
+                round((coord_x+1) * (image_size-1)/2)][
+                    round((coord_y+1) * (image_size-1)/2)] = (1, 0, 0)
+    approx_pi = str(round(counter * 4 / (len(list_points)*(num_image+1)), significant_figures))
+    while len(approx_pi) != significant_figures + 2:
         approx_pi += "0"
-    liste_afficheur = afficheur_pi(approx_pi, chiffre_significatif, taille_image)
-    liste_echange_bleu = []
-    liste_echange_rouge = []
-    liste_echange_blanc = []
-    for k in liste_afficheur:
+    list_display = display_pi(approx_pi, significant_figures, image_size)
+    list_swap_blue = []
+    list_swap_red = []
+    list_swap_white = []
+    for k in list_display:
         if image[k[0]][k[1]] == (0, 0, 1):
-            liste_echange_bleu += [k]
+            list_swap_blue += [k]
             image[k[0]][k[1]] = (0, 0, 0)
         elif image[k[0]][k[1]] == (1, 0, 0):
-            liste_echange_rouge += [k]
+            list_swap_red += [k]
             image[k[0]][k[1]] = (0, 0, 0)
         else:
-            liste_echange_blanc += [k]
+            list_swap_white += [k]
             image[k[0]][k[1]] = (0, 0, 0)
-    liste_echange = (liste_echange_bleu, liste_echange_rouge, liste_echange_blanc)
-    return (approx_pi, compteur, liste_echange)
+    list_swap = (list_swap_blue, list_swap_red, list_swap_white)
+    return (approx_pi, counter, list_swap)
 
 
-def decolorie_compteur(image, liste_echange):
-    """Enlève les pixel noir du compteur et remet ceux d'avant."""
-    for k in liste_echange[0]:
+def discolor_pi(image, list_swap):
+    """Remove black pixels."""
+    for k in list_swap[0]:
         image[k[0]][k[1]] = (0, 0, 1)
-    for k in liste_echange[1]:
+    for k in list_swap[1]:
         image[k[0]][k[1]] = (1, 0, 0)
-    for k in liste_echange[2]:
+    for k in list_swap[2]:
         image[k[0]][k[1]] = (1, 1, 1)
 
 
-def generate_ppm_file(liste_points, taille_image, chiffre_significatif, num_image, image, compteur):
-    """Génère une image au format ppm,
-    les points à l'interieur du cercle sont en bleus, ceux à l'exterieur en rouge,
-    les points non coloriés sont blancs et ceux de l'afficheur de pi sont en noirs.
-    La fonction prend en argument la liste des couples (points_tirés, booléen),
-    le booléen étant vrai, si le point est dans le cercle unité.
-    Renvoie le compteur."""
-    (approx_pi, compteur, liste_echange) = color_image(
-        liste_points, image, chiffre_significatif, num_image, compteur
+def generate_ppm_file(list_points, image_size, significant_figures, num_image, image, counter):
+    """Make the ppm files."""
+    (approx_pi, counter, list_swap) = color_image(
+        list_points, image, significant_figures, num_image, counter
     )
-    nom_image = f"img{num_image}_{approx_pi[0]}-"
+    image_name = f"img{num_image}_{approx_pi[0]}-"
     for i in range(2, len(approx_pi)):
-        nom_image += f"{approx_pi[i]}"
-    nom_image += ".ppm"
-    fichier_ppm = open(nom_image, "w", encoding = "UTF_8")
-    print("P3", file = fichier_ppm)
-    print(f"{taille_image} {taille_image}", file = fichier_ppm)
-    print("1", file = fichier_ppm)
-    for i in range(taille_image):
-        for j in range(taille_image):
+        image_name += f"{approx_pi[i]}"
+    image_name += ".ppm"
+    ppm_file = open(image_name, "w", encoding = "UTF_8")
+    print("P3", file = ppm_file)
+    print(f"{image_size} {image_size}", file = ppm_file)
+    print("1", file = ppm_file)
+    for i in range(image_size):
+        for j in range(image_size):
             print(
-                f"{image[i][j][0]} {image[i][j][1]} {image[i][j][2]} ", end = "", file = fichier_ppm
+                f"{image[i][j][0]} {image[i][j][1]} {image[i][j][2]} ", end = "", file = ppm_file
             )
-    fichier_ppm.close()
-    decolorie_compteur(image, liste_echange)
-    return compteur
+    ppm_file.close()
+    discolor_pi(image, list_swap)
+    return counter
 
 
-def verifie_parametres(parametres):
-    """Fonction qui vérifie que les paramètres d'entrés sont valides.
-    Renvoie une exception si ce n'est pas le cas."""
+def check_parameters(parameters):
+    """Fonction that check if the input parameters are good."""
     if (
-        len(parametres) != 3 or int(parametres[0]) < 100 or
-        int(parametres[1]) < 100 or int(parametres[2]) not in range(1,6)
+        len(parameters) != 3 or int(parameters[0]) < 100 or
+        int(parameters[1]) < 100 or int(parameters[2]) not in range(1,6)
     ):
         raise ValueError
 
 
 def convert_ppm_to_gif():
-    """Renvoie dans le terminal l'action à effectuer pour convertir
-    les images ppm en gif."""
+    """Make the gif file."""
     subprocess.run(["convert", "-delay", "100", "*.ppm", "pi.gif"], check = True)
 
 
 def main():
-    """Fonction principal du programme, prends les paramètres d'entrés du programme
-    et renvoie l'image gif voulue."""
-    parametres = sys.argv
-    parametres.pop(0)
-    verifie_parametres(parametres)
-    taille_image = int(parametres[0])
-    nb_points = int(parametres[1])
-    chiffre_significatif = int(parametres[2])
-    image = init_image(taille_image)
-    compteur = 0
+    """Main fonction."""
+    parameters = sys.argv
+    parameters.pop(0)
+    check_parameters(parameters)
+    image_size = int(parameters[0])
+    nb_points = int(parameters[1])
+    significant_figures = int(parameters[2])
+    image = init_image(image_size)
+    counter = 0
     for num_image in range(10):
-        liste_points = approximate_pi.liste_points(nb_points//10)
-        compteur = generate_ppm_file(
-            liste_points, taille_image, chiffre_significatif, num_image, image, compteur
+        list_points = approximate_pi.list_of_points(nb_points//10)
+        counter = generate_ppm_file(
+            list_points, image_size, significant_figures, num_image, image, counter
         )
     convert_ppm_to_gif()
 
